@@ -14,7 +14,7 @@ const app = express();
 // Update CORS for production
 app.use(cors({
   origin: [
-    'https://hireme4u.vercel.app',  // Your Vercel URL (will update after frontend deploy)
+    'https://hireme4you.vercel.app',  // Your Vercel URL (will update after frontend deploy)
     'http://localhost:5173'
   ],
   credentials: true
