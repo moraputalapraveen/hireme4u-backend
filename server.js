@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import jobRoutes from './routes/jobs.js';
 import adminRoutes from './routes/admin.js';
 import visitorRoutes from './routes/visitor.js';
+import analyticsRoutes from './routes/analytics.js';  // ADD THIS LINE
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/jobs', jobRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/visitor', visitorRoutes);
+app.use('/api/analytics', analyticsRoutes);  // ADD THIS LINE
 
 app.get('/', (req, res) => {
   res.json({ message: 'HireMe4U API is running' });
