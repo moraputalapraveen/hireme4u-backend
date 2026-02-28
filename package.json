@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+      "sitemap": "node scripts/generate-sitemap.js"
+
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,7 +18,9 @@
     "mongoose": "^8.2.0",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.7",
     "request-ip": "^3.3.0",
+    "rss-parser": "^3.13.0",
     "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {

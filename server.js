@@ -1,15 +1,27 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+console.log('✅ Environment loaded');
+console.log('GMAIL_USER:', process.env.GMAIL_USER);
+console.log('GMAIL_APP_PASSWORD exists:', !!process.env.GMAIL_APP_PASSWORD);
+
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import jobRoutes from './routes/jobs.js';
 import adminRoutes from './routes/admin.js';
 import visitorRoutes from './routes/visitor.js';
 import analyticsRoutes from './routes/analytics.js';
 import uploadRoutes from './routes/upload.js';
 import scheduleJobCleanup from './services/cleanupService.js'; // ADD THIS
+import jobAlertRoutes from './routes/jobAlerts.js';
+import { sendDailyJobAlerts } from './services/emailService.js';
+import { fetchAllRSSFeeds } from './services/rssAggregator.js';
 
-dotenv.config();
+
+import cron from 'node-cron';
+
 
 const app = express();
 
@@ -40,6 +52,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/visitor', visitorRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/job-alerts', jobAlertRoutes);
+
 
 app.get('/', (req, res) => {
   res.json({ message: 'HireMe4U API is running' });
@@ -48,4 +62,19 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+
+cron.schedule('0 2 * * *', async () => {
+  console.log('📡 Running RSS aggregator...');
+  await fetchAllRSSFeeds();
+}, {
+  timezone: "Asia/Kolkata"
+});
+
+cron.schedule('0 8 * * *', async () => {
+  console.log('📧 Sending daily job alerts...');
+  await sendDailyJobAlerts();
+}, {
+  timezone: "Asia/Kolkata"
 });
