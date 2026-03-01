@@ -20,6 +20,7 @@ import { sendDailyJobAlerts } from './services/emailService.js';
 
 
 import cron from 'node-cron';
+import { visitorMiddleware } from './middleware/VisitorMiddleware.js';
 
 
 const app = express();
@@ -32,7 +33,10 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+
 app.use(express.json());
+
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
@@ -52,6 +56,8 @@ app.use('/api/visitor', visitorRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/job-alerts', jobAlertRoutes);
+
+app.use(visitorMiddleware);
 
 
 app.get('/', (req, res) => {
