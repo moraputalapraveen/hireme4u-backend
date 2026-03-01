@@ -201,14 +201,13 @@ router.get('/dashboard', protect, async (req, res) => {
   }
 });
 // Get dashboard data (protected)
+// Get dashboard data (protected)
 router.get('/dashboard', protect, async (req, res) => {
   try {
     const now = new Date();
-    const today = new Date(now.setHours(0, 0, 0, 0));
     const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
     const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-    // Get all data in parallel
     const [
       activeNow,
       todayVisits,
@@ -226,7 +225,7 @@ router.get('/dashboard', protect, async (req, res) => {
       
       // Today's visits
       Analytics.countDocuments({
-        timestamp: { $gte: today }
+        timestamp: { $gte: new Date().setHours(0,0,0,0) }
       }),
       
       // Total page views (30 days)
@@ -287,7 +286,7 @@ router.get('/dashboard', protect, async (req, res) => {
         }
       ]),
       
-      // ✅ FIX: Top referrers - include direct visits
+      // ✅ FIXED: Top referrers with proper grouping
       Analytics.aggregate([
         {
           $match: {
@@ -296,12 +295,24 @@ router.get('/dashboard', protect, async (req, res) => {
         },
         {
           $group: {
-            _id: { $ifNull: ['$referrer', 'direct'] },
+            _id: { 
+              $cond: {
+                if: { $eq: ['$referrer', null] },
+                then: 'direct',
+                else: {
+                  $cond: {
+                    if: { $eq: ['$referrer', ''] },
+                    then: 'direct',
+                    else: '$referrer'
+                  }
+                }
+              }
+            },
             count: { $sum: 1 }
           }
         },
         { $sort: { count: -1 } },
-        { $limit: 5 }
+        { $limit: 10 }
       ]),
       
       // Top countries
@@ -338,11 +349,41 @@ router.get('/dashboard', protect, async (req, res) => {
 
     const returningVisitors = totalVisitors - newVisitors;
 
-    // Format referrers
-    const formattedReferrers = referrers.map(r => ({ 
-      source: r._id === 'direct' ? 'Direct Visit' : r._id, 
-      count: r.count 
-    }));
+    // Format referrers nicely
+    const formattedReferrers = referrers.map(r => {
+      let source = r._id;
+      
+      // Clean up common referrer patterns
+      if (source === 'direct' || !source) {
+        source = 'Direct Visit';
+      } else if (source.includes('google')) {
+        source = 'Google';
+      } else if (source.includes('facebook') || source.includes('fb.com')) {
+        source = 'Facebook';
+      } else if (source.includes('instagram')) {
+        source = 'Instagram';
+      } else if (source.includes('linkedin')) {
+        source = 'LinkedIn';
+      } else if (source.includes('twitter') || source.includes('x.com')) {
+        source = 'Twitter/X';
+      } else if (source.includes('whatsapp')) {
+        source = 'WhatsApp';
+      } else if (source.includes('telegram')) {
+        source = 'Telegram';
+      } else if (source.includes('youtube')) {
+        source = 'YouTube';
+      } else if (source.includes('bing')) {
+        source = 'Bing';
+      } else if (source.includes('yahoo')) {
+        source = 'Yahoo';
+      } else if (source.includes('localhost') || source.includes('127.0.0.1')) {
+        source = 'Local Development';
+      } else if (source.includes('hireme4you.vercel.app')) {
+        source = 'Internal Link';
+      }
+      
+      return { source, count: r.count };
+    });
 
     res.json({
       success: true,
@@ -351,7 +392,7 @@ router.get('/dashboard', protect, async (req, res) => {
         todayVisits,
         totalPageViews,
         totalVisitors,
-        avgTimeOnSite: '2m 30s', // You can calculate this from session data
+        avgTimeOnSite: '2m 30s',
         dailyStats,
         newVisitors,
         returningVisitors,
