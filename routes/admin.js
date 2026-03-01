@@ -96,6 +96,58 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Update job (protected)
+router.put('/jobs/:id', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    // Check ownership (if you have user-specific jobs)
+    // if (job.postedBy?.toString() !== req.user.id && req.user.role !== 'admin') {
+    //   return res.status(403).json({ message: 'Not authorized' });
+    // }
+
+    const updatedJob = await Job.findByIdAndUpdate(
+      req.params.id,
+      { 
+        ...req.body,
+        isFresherFriendly: req.body.experienceLevel === 'Fresher' || req.body.experienceLevel === '0-1 years'
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({ success: true, job: updatedJob });
+  } catch (error) {
+    console.error('Error updating job:', error);
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// Delete job (protected)
+router.delete('/jobs/:id', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    
+    if (!job) {
+      return res.status(404).json({ success: false, message: 'Job not found' });
+    }
+
+    // Check ownership (if you have user-specific jobs)
+    // if (job.postedBy?.toString() !== req.user.id && req.user.role !== 'admin') {
+    //   return res.status(403).json({ message: 'Not authorized' });
+    // }
+
+    await job.deleteOne();
+    res.json({ success: true, message: 'Job deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting job:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // POST new job - PROTECTED
 router.post('/jobs', protect, async (req, res) => {
   try {
