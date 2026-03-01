@@ -17,7 +17,6 @@ import uploadRoutes from './routes/upload.js';
 import scheduleJobCleanup from './services/cleanupService.js'; // ADD THIS
 import jobAlertRoutes from './routes/jobAlerts.js';
 import { sendDailyJobAlerts } from './services/emailService.js';
-import { fetchAllRSSFeeds } from './services/rssAggregator.js';
 
 
 import cron from 'node-cron';
@@ -65,12 +64,7 @@ app.listen(PORT, () => {
 });
 
 
-cron.schedule('0 2 * * *', async () => {
-  console.log('📡 Running RSS aggregator...');
-  await fetchAllRSSFeeds();
-}, {
-  timezone: "Asia/Kolkata"
-});
+
 
 cron.schedule('0 8 * * *', async () => {
   console.log('📧 Sending daily job alerts...');
